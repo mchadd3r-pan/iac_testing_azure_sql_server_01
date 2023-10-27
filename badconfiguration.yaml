@@ -1,0 +1,44 @@
+provider "azurerm" {
+  features {}
+}
+
+resource "azurerm_resource_group" "example" {
+  name     = "resourceGroupName"
+  location = "eastus"
+}
+
+resource "azurerm_sql_server" "example" {
+  name                         = "sqlservername"
+  resource_group_name          = azurerm_resource_group.example.name
+  location                     = azurerm_resource_group.example.location
+  version                      = "12.0"
+  administrator_login          = "sqladmin"
+  administrator_login_password = "Password1234!"
+
+  extended_auditing_policy {
+    storage_endpoint                        = azurerm_storage_account.example.primary_blob_endpoint
+    storage_account_access_key              = azurerm_storage_account.example.primary_access_key
+    storage_account_access_key_is_secondary = true
+    retention_in_days                       = 6
+  }
+
+  tags = {
+    Environment = "Production"
+  }
+}
+
+resource "azurerm_storage_account" "example" {
+  name                = "storageaccountname"
+  resource_group_name = azurerm_resource_group.example.name
+
+  location                 = azurerm_resource_group.example.location
+  account_tier             = "Standard"
+  account_replication_type = "LRS"
+}
+
+resource "azurerm_sql_database" "example" {
+  name                = "sqldatabasename"
+  resource_group_name = azurerm_resource_group.example.name
+  location            = azurerm_resource_group.example.location
+  server_name         = azurerm_sql_server.example.name
+}
